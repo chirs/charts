@@ -18,15 +18,41 @@ h1 {
   font-weight: normal;
 }
 
+h1 a {
+  color: inherit;
+  text-decoration: none;
+}
+
 header p {
   margin: 4px 0 0;
   color: #777;
 }
 
+.charts-nav {
+  margin-top: 16px;
+}
+
+.charts-nav a {
+  display: inline-block;
+  margin: 0 14px 4px 0;
+  color: #777;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+
+.charts-nav a:hover {
+  color: #333;
+}
+
+.charts-nav a.current {
+  color: #333;
+  border-bottom-color: #333;
+}
+
 .chart {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 0;
+  padding: 24px 0;
   border-top: 1px solid #e4e4e4;
 }
 
@@ -79,4 +105,21 @@ ul.layers li.selected {
 
 .source a {
   color: #999;
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e4e4e4;
+}
+
+.pager a {
+  color: #777;
+  text-decoration: none;
+}
+
+.pager a:hover {
+  color: #333;
 }

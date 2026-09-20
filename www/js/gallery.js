@@ -1,6 +1,7 @@
-// Builds one section per chart: heading, layer toggles, canvas, source.
+// DOM for the nav, one chart, and the pager.
 
 import { draw, heightFor, parseDate } from './timeline.js';
+import { neighbors } from './routing.js';
 
 const WIDTH = 1200;
 
@@ -11,6 +12,12 @@ function element(tag, className, text) {
   return node;
 }
 
+function link(href, className, text) {
+  const node = element('a', className, text);
+  node.href = href;
+  return node;
+}
+
 function activeEvents(chart, active) {
   return (chart.layers || [])
     .filter((layer) => active.has(layer.name))
@@ -18,7 +25,23 @@ function activeEvents(chart, active) {
     .sort((a, b) => parseDate(a.date) - parseDate(b.date));
 }
 
-function section(chart) {
+export function renderNav(container, charts, current) {
+  const nav = element('nav', 'charts-nav');
+  for (const chart of charts) {
+    nav.appendChild(link(`#${chart.slug}`, chart.slug === current.slug ? 'current' : null, chart.title));
+  }
+  container.replaceChildren(nav);
+}
+
+function pager(charts, chart) {
+  const { prev, next } = neighbors(charts, chart.slug);
+  const node = element('nav', 'pager');
+  node.appendChild(link(`#${prev.slug}`, 'prev', `‹ ${prev.title}`));
+  node.appendChild(link(`#${next.slug}`, 'next', `${next.title} ›`));
+  return node;
+}
+
+export function renderChart(container, charts, chart) {
   const layers = chart.layers || [];
   const active = new Set(layers.length ? [layers[0].name] : []);
 
@@ -54,16 +77,12 @@ function section(chart) {
 
   if (chart.source) {
     const source = element('p', 'source', 'Source: ');
-    const link = element('a', null, chart.source);
-    link.href = chart.source;
-    source.appendChild(link);
+    source.appendChild(link(chart.source, null, chart.source));
     node.appendChild(source);
   }
 
-  redraw();
-  return node;
-}
+  node.appendChild(pager(charts, chart));
 
-export function renderGallery(container, charts) {
-  for (const chart of charts) container.appendChild(section(chart));
+  redraw();
+  container.replaceChildren(node);
 }
