@@ -1,9 +1,0 @@
-form(method="post", action="/h")
-  p
-    textarea(name="haiku[body]") #{haiku.body}
-  
-  input(type="hidden", name="haiku[_id]", value=haiku._id)
-
-  #nav
-    a#save save
-    a#cancel cancel
