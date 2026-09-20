@@ -30,9 +30,21 @@ for (const chart of charts) {
     assert.ok(chart.slug && chart.title, 'needs a slug and title');
     assertRealDate(chart.end, `${chart.slug} end`);
 
+    // Categorical charts colour each span directly; sequential charts carry a
+    // two-stop ramp and give each span a numeric value instead.
+    if (chart.ramp) {
+      assert.equal(chart.ramp.length, 2, `${chart.slug}: a ramp is two stops`);
+      chart.ramp.forEach((stop, i) => assert.match(stop, HEX, `${chart.slug} ramp stop ${i}: bad color`));
+    }
+
     chart.spans.forEach((span, i) => {
       assertRealDate(span.start, `${chart.slug} span ${i}`);
-      assert.match(span.color, HEX, `${chart.slug} span ${i}: bad color`);
+      if (chart.ramp) {
+        assert.equal(typeof span.value, 'number', `${chart.slug} span ${i}: needs a numeric value`);
+        assert.ok(Number.isFinite(span.value), `${chart.slug} span ${i}: value is not finite`);
+      } else {
+        assert.match(span.color, HEX, `${chart.slug} span ${i}: bad color`);
+      }
     });
 
     for (const layer of chart.layers || []) {

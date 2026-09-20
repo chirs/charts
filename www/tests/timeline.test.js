@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { test } from 'node:test';
-import { parseDate, scale, spanRects, eventPoints, yearTicks } from '../js/timeline.js';
+import { parseDate, scale, spanRects, eventPoints, yearTicks, colorFor } from '../js/timeline.js';
 
 const chart = {
   end: '2010-01-01',
@@ -70,4 +70,57 @@ test('year ticks outside the chart range are dropped, not clamped to the edge', 
   assert.ok(!ticks.some((t) => t.year === 2001), '2001 is before the chart starts');
   assert.equal(ticks[0].year, 2002);
   assert.ok(ticks.every((t) => t.x > 0));
+});
+
+test('a ramp interpolates color across the range of values', () => {
+  const ramped = {
+    end: '2010-01-01',
+    ramp: ['#000000', '#FFFFFF'],
+    spans: [
+      { start: '2000-01-01', value: 0 },
+      { start: '2005-01-01', value: 5 },
+      { start: '2008-01-01', value: 10 },
+    ],
+  };
+  const color = colorFor(ramped);
+  assert.equal(color(ramped.spans[0]), '#000000', 'lowest value takes the first stop');
+  assert.equal(color(ramped.spans[2]), '#FFFFFF', 'highest value takes the second stop');
+  assert.equal(color(ramped.spans[1]), '#808080', 'midpoint lands halfway');
+});
+
+test('a ramp with one distinct value does not divide by zero', () => {
+  const flat = {
+    end: '2010-01-01',
+    ramp: ['#000000', '#FFFFFF'],
+    spans: [{ start: '2000-01-01', value: 3 }, { start: '2005-01-01', value: 3 }],
+  };
+  assert.equal(colorFor(flat)(flat.spans[0]), '#FFFFFF');
+});
+
+test('spanRects resolves ramp colors, not just literal ones', () => {
+  const ramped = {
+    end: '2010-01-01',
+    ramp: ['#000000', '#FFFFFF'],
+    spans: [{ start: '2000-01-01', value: 1 }, { start: '2005-01-01', value: 2 }],
+  };
+  assert.deepEqual(spanRects(ramped, 1000).map((r) => r.color), ['#000000', '#FFFFFF']);
+});
+
+test('an explicit start widens the range past the first span', () => {
+  const widened = { start: '1999-01-01', end: '2010-01-01', spans: [{ start: '2000-01-01' }] };
+  assert.equal(scale(widened, 1000)(parseDate('1999-01-01')), 0);
+  assert.ok(spanRects(widened, 1000)[0].x > 0, 'the first span no longer sits at the left edge');
+});
+
+test('isDark picks text contrast off the actual span color', () => {
+  // Guards the tick and span label colors: a sequential ramp runs from
+  // near-white to near-black, so a fixed text color is unreadable at one end.
+  const ramped = {
+    end: '2010-01-01',
+    ramp: ['#F7F3E8', '#1B5E3F'],
+    spans: [{ start: '2000-01-01', value: 0 }, { start: '2005-01-01', value: 10 }],
+  };
+  const [light, dark] = spanRects(ramped, 1000).map((r) => r.color);
+  assert.equal(light, '#F7F3E8');
+  assert.equal(dark, '#1B5E3F');
 });

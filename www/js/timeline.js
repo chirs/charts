@@ -25,9 +25,12 @@ export function sortedSpans(chart) {
   return (chart.spans || []).slice().sort((a, b) => parseDate(a.start) - parseDate(b.start));
 }
 
+// A chart normally runs from its first span, but `start` widens it — the
+// minimum wage was signed into law four months before the first rate took
+// effect, and that event has to have somewhere to sit.
 export function bounds(chart) {
   const spans = sortedSpans(chart);
-  const start = spans.length ? parseDate(spans[0].start) : parseDate(chart.start);
+  const start = chart.start ? parseDate(chart.start) : parseDate(spans[0].start);
   return { start, end: parseDate(chart.end) };
 }
 
@@ -38,16 +41,35 @@ export function scale(chart, width) {
   return (date) => Math.round(Math.max(0, Math.min(1, (date - start) / range)) * width);
 }
 
+const channels = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+
+const toHex = (rgb) => '#' + rgb.map((c) => Math.round(c).toString(16).padStart(2, '0')).join('').toUpperCase();
+
+const mix = (from, to, t) => toHex(channels(from).map((c, i) => c + (channels(to)[i] - c) * t));
+
+// Categorical charts give each span a `color`. Sequential charts give each a
+// numeric `value` and the chart a two-stop `ramp`, and the color is
+// interpolated across the range of values present.
+export function colorFor(chart) {
+  if (!chart.ramp) return (span) => span.color;
+  const values = chart.spans.map((span) => span.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  // A single distinct value would divide by zero; pin it to the top of the ramp.
+  return (span) => (max === min ? chart.ramp[1] : mix(chart.ramp[0], chart.ramp[1], (span.value - min) / (max - min)));
+}
+
 // Each span runs to the start of the next one. The original drawRectangle
 // filled from each start to the full canvas width and relied on later spans
 // painting over it, which broke silently on unsorted input.
 export function spanRects(chart, width) {
   const spans = sortedSpans(chart);
   const toX = scale(chart, width);
+  const color = colorFor(chart);
   return spans.map((span, i) => {
     const x = toX(parseDate(span.start));
     const next = i + 1 < spans.length ? toX(parseDate(spans[i + 1].start)) : width;
-    return { x, w: next - x, color: span.color, label: span.label };
+    return { x, w: next - x, color: color(span), label: span.label };
   });
 }
 
@@ -112,12 +134,15 @@ export function draw(ctx, chart, events, width, height) {
   }
 
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
-  ctx.fillStyle = '#333333';
   for (const tick of yearTicks(chart, width)) {
     ctx.beginPath();
     ctx.moveTo(tick.x + 0.5, 0);
     ctx.lineTo(tick.x + 0.5, height);
     ctx.stroke();
+    // The label sits on whatever span it lands on, which on a sequential ramp
+    // can be anything from near-white to near-black.
+    const under = rects.find((rect) => tick.x >= rect.x && tick.x < rect.x + rect.w);
+    ctx.fillStyle = under && isDark(under.color) ? '#FFFFFF' : '#333333';
     ctx.fillText(String(tick.year), tick.x + 3, height - 8);
   }
 
