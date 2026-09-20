@@ -1,0 +1,10 @@
+{
+  "name": "charts",
+  "version": "1.0.0",
+  "description": "Historical data drawn as colored spans over time",
+  "type": "module",
+  "scripts": {
+    "test": "node --test www/tests/timeline.test.js www/tests/data.test.js"
+  },
+  "license": "MIT"
+}
