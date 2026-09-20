@@ -6,7 +6,11 @@ Open work only; completed items are removed as they land (see git history).
 
 ## Charts
 
-- [ ] Add more datasets — the collection is the point, and three is thin.
+- [ ] Add more datasets — the collection is the point, and four is still thin.
+- [ ] Verify the federal minimum wage rates against the DOL table. Written from
+      memory like the recession dates; the 1961 and 1963 rates in particular
+      applied only to already-covered workers, and the chart does not track the
+      separate phase-in schedule for newly covered ones.
 - [ ] Diff the NBER recession dates against the committee's published table.
       They were written from memory and spot-check well, but have not been
       verified line by line.
@@ -30,7 +34,15 @@ Open work only; completed items are removed as they land (see git history).
       independently, so they only line up by coincidence of their ranges.
       Worth an explicit shared-axis mode if a third one joins them.
 
+- [ ] The nav lists every chart inline, which stops working somewhere past a
+      dozen. Needs grouping or a real index page before then.
+
 ## Deferred
+
+- Stacked tracks for overlapping spans. The model is a strict step function,
+  which rules out any chart with concurrent states — space programs, wars as
+  durations rather than start dates. Worth doing when a chart actually needs
+  it; not worth generalizing the renderer on spec.
 
 - Extracting `www/js/timeline.js` as a standalone library. It is already
   separated from the gallery and the geometry is pure, so this is cheap to do

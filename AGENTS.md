@@ -17,12 +17,36 @@ playbooks, which clone the repo and serve `www/` as the document root.
   definition into coordinates and never touches a canvas. `draw()` is the only
   function that does, which is what keeps the rest testable under node. Do not
   reach for a canvas above that line.
-- `www/js/gallery.js` — builds one `<section>` per chart and owns the layer
-  toggle state.
-- `www/js/main.js` — entry point, four lines.
+- `www/js/routing.js` — pure: which chart a fragment selects and what sits
+  either side of it. No DOM, so it is tested directly.
+- `www/js/gallery.js` — all the DOM: nav, one chart's section, pager. Owns the
+  layer toggle state.
+- `www/js/main.js` — entry point. The only place that touches `location`;
+  re-renders on `hashchange`.
 - `www/data/*.js` — one chart per file, default-exporting the chart object.
   `www/data/index.js` is the collection; a chart is not live until it is
-  imported there.
+  imported there, and its order there is the order of the nav and of
+  prev/next.
+
+## Color
+
+Charts are categorical (each span carries a `color`) or sequential (the chart
+carries a two-stop `ramp` and each span a numeric `value`, interpolated across
+the range present). `colorFor` resolves either into the color `spanRects`
+reports, so nothing downstream needs to know which kind it is.
+
+Never hardcode a text color over a span. A sequential ramp runs from
+near-white to near-black, so span labels and year ticks both pick contrast
+from the color actually underneath them — that is what `isDark` is for, and
+dropping it makes the dark end of a ramp unreadable.
+
+## Spans cannot overlap
+
+The model is a strict step function: one span at a time, each running to the
+start of the next. Anything with concurrent states — overlapping space
+programs, simultaneous wars as durations rather than start dates — needs
+stacked tracks, which the renderer does not have. See `ROADMAP.md` before
+promising such a chart.
 
 ## The date rule
 
